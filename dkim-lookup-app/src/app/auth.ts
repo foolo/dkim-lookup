@@ -19,17 +19,24 @@ export const authOptions = {
 	],
 	callbacks: {
 		async jwt({ token, account }: { token: any, account: any }) {
+			console.log("---------------jwt----------");
 			if (account) {
+				console.log("jwt callback account.expires_in", account.expires_in);
 				token.access_token = account.access_token
 				token.refresh_token = account.refresh_token
 				token.expires_at = Math.floor(Date.now() / 1000 + account.expires_in)
 				return token
 
 			}
-			else if (Date.now() < token.expires_at * 1000) {
+
+			console.log("jwt callback token.access_token", token.access_token);
+			console.log("jwt callback token.expires_at", token.expires_at);
+			if (Date.now() < token.expires_at * 1000) {
+				console.log("jwt callback token not expired");
 				return token
 			}
 			else {
+				console.log("jwt callback token expired");
 				try {
 					// https://accounts.google.com/.well-known/openid-configuration
 					const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -49,10 +56,12 @@ export const authOptions = {
 						throw tokens
 					}
 
+					console.log("jwt callback refreshed token OK");
 
 					token.access_token = tokens.access_token
 					token.expires_at = Math.floor(Date.now() / 1000 + (tokens.expires_in as any))
 					token.refresh_token = tokens.refresh_token ?? token.refresh_token
+					console.log("NEW TOKEN", token.access_token, token.expires_at - Date.now() / 1000);
 					return token
 				}
 				catch (error) {

@@ -42,7 +42,12 @@ export default function Page() {
 					}
 				}
 				if (!nextPageToken) {
-					break;
+					if (sessionStorage.infiniteUpload) {
+						console.log('infiniteUpload');
+					}
+					else {
+						break;
+					}
 				}
 			}
 			catch (error: any) {

@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 async function handleMessage(messageId: string, gmail: gmail_v1.Gmail, resultArray: DomainSelectorPair[]) {
-	console.log('handle message', messageId);
+	//console.log('handle message', messageId);
 	const messageRes = await gmail.users.messages.get({ userId: 'me', id: messageId, format: 'metadata' })
 	let headers = messageRes.data.payload?.headers
 	if (!headers) {
