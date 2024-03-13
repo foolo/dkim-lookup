@@ -1,14 +1,22 @@
 import { prisma } from "@/lib/db";
 
 async function main() {
-	let dsps = await prisma.domainSelectorPair.findMany();
-	console.log(`found ${dsps.length} domain/selector pairs`);
-	for (let dsp of dsps) {
-		let records = await prisma.dkimRecord.findMany({ where: { domainSelectorPairId: dsp.id } });
-		if (records.length > 1) {
-			console.log(`found ${records.length} keys for ${dsp.domain}, ${dsp.selector}`);
-			for (let record of records) {
-				console.log(`#${record.id}: ${record.value}`)
+	let dkimKeys = await prisma.dkimRecord.findMany({ include: { domainSelectorPair: true } });
+	let dspToKeysMap = new Map<string, string[]>();
+	for (let dkimKey of dkimKeys) {
+		let dsp = `${dkimKey.domainSelectorPair.domain}, ${dkimKey.domainSelectorPair.selector}`;
+		let dkimKeysForDsp = dspToKeysMap.get(dsp);
+		if (!dkimKeysForDsp) {
+			dkimKeysForDsp = [];
+			dspToKeysMap.set(dsp, dkimKeysForDsp);
+		}
+		dkimKeysForDsp.push(dkimKey.value);
+	}
+	for (let [dsp, dkimKeys] of dspToKeysMap) {
+		if (dkimKeys.length > 1) {
+			console.log(`found ${dkimKeys.length} keys for ${dsp}`);
+			for (let dkimKey of dkimKeys) {
+				console.log(dkimKey);
 			}
 			console.log();
 		}
