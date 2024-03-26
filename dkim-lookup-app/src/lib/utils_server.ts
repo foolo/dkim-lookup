@@ -63,17 +63,17 @@ export async function fetchDkimDnsRecord(domain: string, selector: string): Prom
 		response = await resolver.resolve(qname, 'TXT');
 	}
 	catch (error) {
-		console.log(`error fetching ${qname}: ${error}`);
+		//console.log(`error fetching ${qname}: ${error}`);
 		return null;
 	}
 	if (response.length === 0) {
-		console.log(`warning: no records found for ${qname}`);
+		//console.log(`warning: no records found for ${qname}`);
 		return null;
 	}
 	if (response.length > 1) {
 		console.log(`warning: > 1 record found for ${qname}, using first one`);
 	}
-	console.log(`found dns record for ${qname}`);
+	//console.log(`found dns record for ${qname}`);
 	const dkimData = response[0].join('');
 	const dkimRecord: DnsDkimFetchResult = {
 		selector,
