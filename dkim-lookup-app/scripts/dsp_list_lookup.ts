@@ -30,27 +30,21 @@ async function main() {
 	}
 	domains.splice(0, startIndex);
 
+	let dsps = await prisma.domainSelectorPair.findMany();
+	let dspMap = new Map<string, boolean>();
+	for (let dsp of dsps) {
+		dspMap.set(`${dsp.domain}/${dsp.selector}`.toLowerCase(), true);
+	}
 	for (const domain of domains) {
 		console.log(`${new Date().toISOString()} checking domain ${domain}`);
 		for (const selector of selectors) {
-			let dsp = await prisma.domainSelectorPair.findFirst({
-				where: {
-					domain: {
-						equals: domain,
-						mode: Prisma.QueryMode.insensitive,
-					},
-					selector: {
-						equals: selector,
-						mode: Prisma.QueryMode.insensitive
-					}
-				}
-			});
-			if (!dsp) {
-				const dkimDnsRecord = await fetchDkimDnsRecord(domain, selector);
-				if (dkimDnsRecord) {
-					if (checkkVersion(dkimDnsRecord.value)) {
-						console.log(`found dkim dns record for ${selector}._domainkey.${domain}: ${truncate(dkimDnsRecord.value, 50)}`);
-					}
+			if (dspMap.has(`${domain}/${selector}`.toLowerCase())) {
+				continue;
+			}
+			const dkimDnsRecord = await fetchDkimDnsRecord(domain, selector);
+			if (dkimDnsRecord) {
+				if (checkkVersion(dkimDnsRecord.value)) {
+					console.log(`found dkim dns record for ${selector}._domainkey.${domain}: ${truncate(dkimDnsRecord.value, 50)}`);
 				}
 			}
 		}
