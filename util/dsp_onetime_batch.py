@@ -8,24 +8,35 @@ q: "queue.Queue[str]" = queue.Queue()
 dns_image = (modal.Image.debian_slim(python_version="3.10").pip_install("dnspython"))
 
 
-def worker():
+def resolve_qname(qname: str):
 	import dns.exception
 	import dns.resolver
 	import dns.rdatatype
+
+	try:
+		response = dns.resolver.resolve(qname, dns.rdatatype.TXT)
+		if len(response) == 0:
+			#print(f'warning: no records found for {qname}')
+			return
+		if len(response) > 1:
+			#print(f'warning: > 1 record found for {qname}, using first one')
+			pass
+		dkimData = b''.join(response[0].strings).decode()  # type: ignore
+		version = dkimData.split(';')[0].strip()
+		if version == 'v=DKIM1':
+			print(f'found DKIM1 record for {qname}')
+		else:
+			#print(f'warning: dkim version not supported: {version}')
+			pass
+	except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as e:
+		#print(f'warning: dns resolver error: {e}')
+		pass
+
+
+def worker():
 	while True:
 		qname = q.get()
-		try:
-			response = dns.resolver.resolve(qname, dns.rdatatype.TXT)
-			if len(response) == 0:
-				#print(f'warning: no records found for {qname}')
-				pass
-			elif len(response) > 1:
-				#print(f'warning: > 1 record found for {qname}, using first one')
-				pass
-			print(f'found dkim record for {qname}')
-		except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as e:
-			#print(f'warning: dns resolver error: {e}')
-			pass
+		resolve_qname(qname)
 		q.task_done()
 
 
