@@ -1,6 +1,7 @@
 import argparse
 import queue
 import threading
+import time
 import modal
 
 stub = modal.Stub("dsp-onetime-batch")
@@ -69,8 +70,11 @@ def run_batch_job(domains_filename: str, selectors_filename: str, local: bool = 
 		selectors = f.read().splitlines()
 	with open(domains_filename) as f:
 		domains = f.read().splitlines()
+	start_time = time.time()
 	for index, domain in enumerate(domains):
-		print(f"processing domain {index}, {domain}")
+		elapsed_time = time.time() - start_time
+		time_left_sec = ((len(domains) - index) * elapsed_time / index) if index > 0 else 0
+		print(f"processing domain {index}, {domain}, time left: {time_left_sec / 3600} hours")
 		if local:
 			process_domain(domain, selectors)
 		else:
