@@ -1,5 +1,6 @@
 import argparse
 import queue
+import sys
 import threading
 import time
 import modal
@@ -74,7 +75,7 @@ def run_batch_job(domains_filename: str, selectors_filename: str, local: bool = 
 	for index, domain in enumerate(domains):
 		elapsed_time = time.time() - start_time
 		time_left_sec = ((len(domains) - index) * elapsed_time / index) if index > 0 else 0
-		print(f"processing domain {index}, {domain}, time left: {time_left_sec / 3600} hours")
+		print(f"processing domain {index}, {domain}, time left: {time_left_sec / 3600} hours", file=sys.stderr)
 		if local:
 			process_domain(domain, selectors)
 		else:
