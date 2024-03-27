@@ -22,7 +22,7 @@ def worker():
 			elif len(response) > 1:
 				#print(f'warning: > 1 record found for {qname}, using first one')
 				pass
-			print(f'found dkim record for {qname}')
+			#print(f'found dkim record for {qname}')
 		except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as e:
 			#print(f'warning: dns resolver error: {e}')
 			pass
@@ -31,7 +31,7 @@ def worker():
 
 
 def process_domain(domain: str, selectors: list[str]) -> int:
-	print(f"parsing {len(selectors)} selectors... and domain {domain}")
+	#print(f"parsing {len(selectors)} selectors... and domain {domain}")
 	for _i in range(10):
 		t = threading.Thread(target=worker, daemon=True)
 		t.start()
@@ -44,7 +44,6 @@ def process_domain(domain: str, selectors: list[str]) -> int:
 
 @stub.function(image=dns_image)  # type: ignore
 def process_domain_wrapper(domain: str, selectors: list[str]) -> int:
-	print(f"calling parselist")
 	return process_domain(domain, selectors)
 
 
@@ -53,12 +52,13 @@ def run_batch_job(domains_filename: str, selectors_filename: str, local: bool = 
 		selectors = f.read().splitlines()
 	with open(domains_filename) as f:
 		domains = f.read().splitlines()
-	for domain in domains:
-		print(f"processing domain {domain}")
+	for index, domain in enumerate(domains):
+		print(f"processing domain {index}, {domain}")
 		if local:
 			process_domain(domain, selectors)
 		else:
-			process_domain_wrapper.remote(domain, selectors)
+			#process_domain_wrapper.remote(domain, selectors)
+			process_domain_wrapper.spawn(domain, selectors)
 
 
 # remote entrypoint
