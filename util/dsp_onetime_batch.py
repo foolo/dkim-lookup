@@ -16,6 +16,14 @@ def truncateString(s: str, n: int) -> str:
 	return s[:n]
 
 
+def find_dkim_field(txtRecords: list[str]) -> str | None:
+	for record in txtRecords:
+		version = record.split(';')[0].strip()
+		if version == 'v=DKIM1':
+			return record
+	return None
+
+
 def resolve_qname(qname: str):
 	import dns.exception
 	import dns.resolver
@@ -26,12 +34,12 @@ def resolve_qname(qname: str):
 		if len(response) == 0:
 			#print(f'warning: no records found for {qname}')
 			return
-		dkimData = ""
+		txtRecords: list[str] = []
 		for i in range(len(response)):
-			dkimData += b''.join(response[i].strings).decode()  # type: ignore
-		version = dkimData.split(';')[0].strip()
-		if version != 'v=DKIM1':
-			#print(f'warning: dkim version not supported: {version}')
+			txtRecords.append(b''.join(response[i].strings).decode())  # type: ignore
+		dkimData = find_dkim_field(txtRecords)
+		if dkimData is None:
+			#print(f'no DKIM1 record found for {qname}')
 			return
 		for tag in dkimData.split(';'):
 			if tag.strip() == "p=":
