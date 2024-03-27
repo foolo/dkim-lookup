@@ -14,6 +14,15 @@ function checkkVersion(dkimValue: string): boolean {
 	return (version === null || version === 'DKIM1');
 }
 
+async function asyncFetch(domain: string, selector: string) {
+	const dkimDnsRecord = await fetchDkimDnsRecord(domain, selector);
+	if (dkimDnsRecord) {
+		if (checkkVersion(dkimDnsRecord.value)) {
+			console.log(`found dkim dns record for ${selector}._domainkey.${domain}: ${truncate(dkimDnsRecord.value, 50)}`);
+		}
+	}
+}
+
 async function main() {
 	const args = process.argv.slice(2);
 	if (args.length < 2 || args.length > 3) {
@@ -32,20 +41,29 @@ async function main() {
 
 	let dsps = await prisma.domainSelectorPair.findMany();
 	let dspMap = new Map<string, boolean>();
+	let count = 0;
+	let lastCountLog = 0;
 	for (let dsp of dsps) {
 		dspMap.set(`${dsp.domain}/${dsp.selector}`.toLowerCase(), true);
 	}
 	for (const domain of domains) {
 		console.log(`${new Date().toISOString()} checking domain ${domain}`);
+		let promiseArray = [];
 		for (const selector of selectors) {
 			if (dspMap.has(`${domain}/${selector}`.toLowerCase())) {
 				continue;
 			}
-			const dkimDnsRecord = await fetchDkimDnsRecord(domain, selector);
-			if (dkimDnsRecord) {
-				if (checkkVersion(dkimDnsRecord.value)) {
-					console.log(`found dkim dns record for ${selector}._domainkey.${domain}: ${truncate(dkimDnsRecord.value, 50)}`);
-				}
+			let pr = asyncFetch(domain, selector);
+			promiseArray.push(pr);
+			if (promiseArray.length >= 10) {
+				//console.log('waiting for promises to resolve');
+				await Promise.all(promiseArray);
+				count += promiseArray.length;
+				promiseArray = [];
+			}
+			if (count - lastCountLog > 1000) {
+				console.log('processed', count);
+				lastCountLog = count;
 			}
 		}
 	}

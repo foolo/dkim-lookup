@@ -71,7 +71,7 @@ export async function fetchDkimDnsRecord(domain: string, selector: string): Prom
 		return null;
 	}
 	if (response.length > 1) {
-		console.log(`warning: > 1 record found for ${qname}, using first one`);
+		//console.log(`warning: > 1 record found for ${qname}, using first one`);
 	}
 	//console.log(`found dns record for ${qname}`);
 	const dkimData = response[0].join('');
