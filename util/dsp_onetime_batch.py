@@ -2,16 +2,16 @@ import argparse
 import queue
 import threading
 import modal
-import dns.exception
-import dns.resolver
-import dns.rdatatype
 
 stub = modal.Stub("dsp-onetime-batch")
-
 q: "queue.Queue[str]" = queue.Queue()
+dns_image = (modal.Image.debian_slim(python_version="3.10").pip_install("dnspython"))
 
 
 def worker():
+	import dns.exception
+	import dns.resolver
+	import dns.rdatatype
 	while True:
 		qname = q.get()
 		try:
@@ -26,7 +26,7 @@ def worker():
 		except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as e:
 			#print(f'warning: dns resolver error: {e}')
 			pass
-		print(f"done with {qname}")
+		#print(f"done with {qname}")
 		q.task_done()
 
 
@@ -42,7 +42,7 @@ def process_domain(domain: str, selectors: list[str]) -> int:
 	return len(selectors)
 
 
-@stub.function()  # type: ignore
+@stub.function(image=dns_image)  # type: ignore
 def process_domain_wrapper(domain: str, selectors: list[str]) -> int:
 	print(f"calling parselist")
 	return process_domain(domain, selectors)
