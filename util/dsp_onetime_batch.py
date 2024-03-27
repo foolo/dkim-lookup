@@ -18,16 +18,18 @@ def resolve_qname(qname: str):
 		if len(response) == 0:
 			#print(f'warning: no records found for {qname}')
 			return
-		if len(response) > 1:
-			#print(f'warning: > 1 record found for {qname}, using first one')
-			pass
-		dkimData = b''.join(response[0].strings).decode()  # type: ignore
+		dkimData = ""
+		for i in range(len(response)):
+			dkimData += b''.join(response[i].strings).decode()  # type: ignore
 		version = dkimData.split(';')[0].strip()
-		if version == 'v=DKIM1':
-			print(f'found DKIM1 record for {qname}')
-		else:
+		if version != 'v=DKIM1':
 			#print(f'warning: dkim version not supported: {version}')
-			pass
+			return
+		for tag in dkimData.split(';'):
+			if tag.strip() == "p=":
+				# empty p= tag
+				return
+		print(f'found DKIM1 record for {qname}\n')
 	except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as e:
 		#print(f'warning: dns resolver error: {e}')
 		pass
