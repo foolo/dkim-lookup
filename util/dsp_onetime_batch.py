@@ -8,6 +8,12 @@ q: "queue.Queue[str]" = queue.Queue()
 dns_image = (modal.Image.debian_slim(python_version="3.10").pip_install("dnspython"))
 
 
+def truncateString(s: str, n: int) -> str:
+	if len(s) > n and n > 3:
+		return s[:n - 3] + "..."
+	return s[:n]
+
+
 def resolve_qname(qname: str):
 	import dns.exception
 	import dns.resolver
@@ -29,7 +35,7 @@ def resolve_qname(qname: str):
 			if tag.strip() == "p=":
 				# empty p= tag
 				return
-		print(f'found DKIM1 record for {qname}\n')
+		print(f'found DKIM1 record for {qname}: {truncateString(dkimData, 60)}\n')
 	except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as e:
 		#print(f'warning: dns resolver error: {e}')
 		pass
