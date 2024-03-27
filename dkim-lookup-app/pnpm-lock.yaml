@@ -17,6 +17,9 @@ dependencies:
   '@prisma/client':
     specifier: ^5.11.0
     version: 5.11.0(prisma@5.11.0)
+  '@supercharge/promise-pool':
+    specifier: ^3.2.0
+    version: 3.2.0
   '@witnessco/client':
     specifier: ^0.1.14
     version: 0.1.14(viem@2.8.18)
@@ -1164,6 +1167,11 @@ packages:
 
   /@sinclair/typebox@0.31.28:
     resolution: {integrity: sha512-/s55Jujywdw/Jpan+vsy6JZs1z2ZTGxTmbZTPiuSL2wz9mfzA2gN1zzaqmvfi4pq+uOt7Du85fkiwv5ymW84aQ==}
+    dev: false
+
+  /@supercharge/promise-pool@3.2.0:
+    resolution: {integrity: sha512-pj0cAALblTZBPtMltWOlZTQSLT07jIaFNeM8TWoJD1cQMgDB9mcMlVMoetiB35OzNJpqQ2b+QEtwiR9f20mADg==}
+    engines: {node: '>=8'}
     dev: false
 
   /@swagger-api/apidom-ast@0.98.0:

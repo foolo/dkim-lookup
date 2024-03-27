@@ -3,6 +3,7 @@ import { parseDkimRecord, truncate } from '@/lib/utils';
 import { fetchDkimDnsRecord } from '@/lib/utils_server';
 import { Prisma } from '@prisma/client';
 import { readFileSync } from 'node:fs';
+import { PromisePool } from '@supercharge/promise-pool'
 
 function load_list(filename: string): string[] {
 	const fileContents = readFileSync(filename, 'utf8');
@@ -15,6 +16,7 @@ function checkkVersion(dkimValue: string): boolean {
 }
 
 async function asyncFetch(domain: string, selector: string) {
+	console.log(`asyncFetch checking domain ${domain} selector ${selector}`);
 	const dkimDnsRecord = await fetchDkimDnsRecord(domain, selector);
 	if (dkimDnsRecord) {
 		if (checkkVersion(dkimDnsRecord.value)) {
@@ -41,32 +43,55 @@ async function main() {
 
 	let dsps = await prisma.domainSelectorPair.findMany();
 	let dspMap = new Map<string, boolean>();
-	let count = 0;
-	let lastCountLog = 0;
 	for (let dsp of dsps) {
 		dspMap.set(`${dsp.domain}/${dsp.selector}`.toLowerCase(), true);
 	}
-	for (const domain of domains) {
-		console.log(`${new Date().toISOString()} checking domain ${domain}`);
-		let promiseArray = [];
-		for (const selector of selectors) {
-			if (dspMap.has(`${domain}/${selector}`.toLowerCase())) {
-				continue;
+
+	const myIterable = {
+		*[Symbol.iterator]() {
+			let count = 0;
+			let lastCountLog = 0;
+			for (const domain of domains) {
+				console.log(`${new Date().toISOString()} checking domain ${domain}`);
+				let promiseArray = [];
+				for (const selector of selectors) {
+					if (dspMap.has(`${domain}/${selector}`.toLowerCase())) {
+						continue;
+					}
+					yield { domain, selector };
+					//let pr = asyncFetch(domain, selector);
+					//promiseArray.push(pr);
+					// if (promiseArray.length >= 10) {
+					// 	//console.log('waiting for promises to resolve');
+					// 	//await Promise.all(promiseArray);
+					// 	count += promiseArray.length;
+					// 	promiseArray = [];
+					// }
+					// if (count - lastCountLog > 1000) {
+					// 	console.log('processed', count);
+					// 	lastCountLog = count;
+					// }
+				}
 			}
-			let pr = asyncFetch(domain, selector);
-			promiseArray.push(pr);
-			if (promiseArray.length >= 10) {
-				//console.log('waiting for promises to resolve');
-				await Promise.all(promiseArray);
-				count += promiseArray.length;
-				promiseArray = [];
-			}
-			if (count - lastCountLog > 1000) {
-				console.log('processed', count);
-				lastCountLog = count;
-			}
-		}
-	}
+		},
+	  };
+
+
+
+
+
+
+
+		  
+	const { results, errors } = await PromisePool
+	.withConcurrency(2)
+	.for(myIterable)
+	.process(async (dsp, index, pool) => {
+		const user = await asyncFetch(dsp.domain, dsp.selector);
+  	  return user
+	})
+
+	process.exit(0);
 }
 
 main();
