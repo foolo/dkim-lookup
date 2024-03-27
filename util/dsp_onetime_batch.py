@@ -22,16 +22,14 @@ def worker():
 			elif len(response) > 1:
 				#print(f'warning: > 1 record found for {qname}, using first one')
 				pass
-			#print(f'found dkim record for {qname}')
+			print(f'found dkim record for {qname}')
 		except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as e:
 			#print(f'warning: dns resolver error: {e}')
 			pass
-		#print(f"done with {qname}")
 		q.task_done()
 
 
 def process_domain(domain: str, selectors: list[str]) -> int:
-	#print(f"parsing {len(selectors)} selectors... and domain {domain}")
 	for _i in range(10):
 		t = threading.Thread(target=worker, daemon=True)
 		t.start()
@@ -57,7 +55,6 @@ def run_batch_job(domains_filename: str, selectors_filename: str, local: bool = 
 		if local:
 			process_domain(domain, selectors)
 		else:
-			#process_domain_wrapper.remote(domain, selectors)
 			process_domain_wrapper.spawn(domain, selectors)
 
 
@@ -69,7 +66,7 @@ def main(domains_filename: str, selectors_filename: str):
 
 # local entrypoint
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Process some integers.')
+	parser = argparse.ArgumentParser()
 	parser.add_argument('--domains-filename', type=str)
 	parser.add_argument('--selectors-filename', type=str)
 	args = parser.parse_args()
