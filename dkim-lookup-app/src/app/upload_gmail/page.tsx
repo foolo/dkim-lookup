@@ -39,7 +39,7 @@ export default function Page() {
 
 	function NotSignedIn(): React.ReactNode {
 		return <div>
-			<p>You need to be signed in to use this page.</p>
+			<h3>Sign in to continue</h3>
 			<p>
 				For the authentication with Google, OAuth 2.0 is used.
 				The OAuth tokens (access and refresh token) are stored in a JSON Web Token in the web browser.
@@ -75,12 +75,16 @@ export default function Page() {
 		if (!signedIn) {
 			return <NotSignedIn />
 		}
+
 		// check for strict equality to avoid showing a misleading message to the user when the value is unknown (undefined), but the user has in fact granted the scope access
 		if (session.has_metadata_scope === false) {
 			return <InsufficientPermissions />
 		}
 
 		return <>
+			<div>
+				Progress: {progressState}
+			</div>
 			<div>
 				{showStartButton && <button onClick={() => {
 					uploadFromGmail();
@@ -177,9 +181,6 @@ export default function Page() {
 				<p>
 					Domains and selectors will be extracted from the DKIM-Signature header field in each email message in your Gmail account.
 				</p>
-				<div>
-					Progress: {progressState}
-				</div>
 				<ProgressArea />
 			</div >
 		</div >
