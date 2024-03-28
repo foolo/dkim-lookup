@@ -45,8 +45,12 @@ def resolve_qname(qname: str):
 			if tag.strip() == "p=":
 				# empty p= tag
 				return
-		print(f'found DKIM1 record for {qname}: {truncateString(dkimData, 60)}\n')
-	except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as e:
+		tsv_row = ""
+		tsv_row += f'{qname}\t'
+		tsv_row += f'{truncateString(dkimData, 50)}\t'
+		tsv_row += '\n'  # extra newline, workaround for that the stdout from modal.com somtimes has merged lines if there is just one newline
+		print(tsv_row)
+	except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout) as _e:
 		#print(f'warning: dns resolver error: {e}')
 		pass
 
