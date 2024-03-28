@@ -78,11 +78,13 @@ def process_domain_wrapper(domain: str, selectors: list[str]) -> int:
 	return process_domain(domain, selectors)
 
 
-def run_batch_job(domains_filename: str, selectors_filename: str, local: bool = False):
+def run_batch_job(domains_filename: str, selectors_filename: str, *, local: bool = False, sparse: bool = False):
 	with open(selectors_filename) as f:
 		selectors = f.read().splitlines()
 	with open(domains_filename) as f:
 		domains = f.read().splitlines()
+	if sparse:
+		domains = domains[0::1000]
 	start_time = time.time()
 	for index, domain in enumerate(domains):
 		elapsed_time = time.time() - start_time
@@ -96,8 +98,8 @@ def run_batch_job(domains_filename: str, selectors_filename: str, local: bool = 
 
 # remote entrypoint
 @stub.local_entrypoint()  # type: ignore
-def main(domains_filename: str, selectors_filename: str):
-	run_batch_job(domains_filename, selectors_filename)
+def main(domains_filename: str, selectors_filename: str, sparse: bool):
+	run_batch_job(domains_filename, selectors_filename, sparse=sparse)
 
 
 # local entrypoint
