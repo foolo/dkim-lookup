@@ -9,6 +9,7 @@
 # python dsp_onetime_batch.py --domains-filename domains.txt --selectors-filename selectors.txt > output.txt
 
 import argparse
+import datetime
 import queue
 import sys
 import threading
@@ -96,10 +97,11 @@ def run_batch_job(domains_filename: str, selectors_filename: str, *, local: bool
 	if sparse:
 		domains = domains[0::1000]
 	start_time = time.time()
+	print(f"started at {datetime.datetime.fromtimestamp(start_time).isoformat(' ', timespec='seconds')}", file=sys.stderr)
 	for index, domain in enumerate(domains):
-		elapsed_time = time.time() - start_time
-		time_left_sec = ((len(domains) - index) * elapsed_time / index) if index > 0 else 0
-		print(f"processing domain {index}, {domain}, time left: {time_left_sec / 3600} hours", file=sys.stderr)
+		elapsed_hrs = (time.time() - start_time) / 3600
+		time_left_hrs = ((len(domains) - index) * elapsed_hrs / index) if index > 0 else 0
+		print(f"processing domain {index}, elapsed: {elapsed_hrs:.2f}, time left: {time_left_hrs:.2f} hours, {domain}", file=sys.stderr)
 		if local:
 			process_domain(domain, selectors)
 		else:
