@@ -1,3 +1,13 @@
+# this tool searches for DKIM DNS records for each combination of domains and selectors in the provided input files
+
+# prerequisites: install the Modal Python package, see https://modal.com/docs/guide
+#
+# example remote run:
+# modal run dsp_onetime_batch.py --domains-filename domains.txt --selectors-filename selectors.txt --no-sparse > output.txt
+#
+# example local run:
+# python dsp_onetime_batch.py --domains-filename domains.txt --selectors-filename selectors.txt > output.txt
+
 import argparse
 import queue
 import sys
