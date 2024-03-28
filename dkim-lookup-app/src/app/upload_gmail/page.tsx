@@ -37,7 +37,7 @@ export default function Page() {
 		return <p>loading...</p>
 	}
 
-	if (status === "unauthenticated" || !session) {
+	function NotSignedIn(): React.ReactNode {
 		return <div>
 			<p>You need to be signed in to use this page.</p>
 			<p>
@@ -49,8 +49,8 @@ export default function Page() {
 		</div>
 	}
 
-	// check for strict equality to avoid showing a misleading message to the user when the value is unknown (undefined), but the user has in fact granted the scope access
-	if (session.has_metadata_scope === false) {
+
+	function InsufficientPermissions(): React.ReactNode {
 		return <div>
 			<h3>
 				Insufficient permissions
@@ -65,6 +65,50 @@ export default function Page() {
 			</p>
 		</div>
 	}
+
+	// check (status !== "unauthenticated" && session) instead of (status === "authenticated")
+	// because status can be "loading" even when the user is signed in, causing a flickery behavior
+	// as a side effect of the workaround with "await update();"
+	const signedIn = (status !== "unauthenticated") && session;
+
+	function ProgressArea(): React.ReactNode {
+		if (!signedIn) {
+			return <NotSignedIn />
+		}
+		// check for strict equality to avoid showing a misleading message to the user when the value is unknown (undefined), but the user has in fact granted the scope access
+		if (session.has_metadata_scope === false) {
+			return <InsufficientPermissions />
+		}
+
+		return <>
+			<div>
+				{showStartButton && <button onClick={() => {
+					uploadFromGmail();
+				}}>Start</button>}
+				{showResumeButton && <button onClick={() => {
+					uploadFromGmail();
+				}}>Resume</button>}
+				{showPauseButton && <button onClick={() => {
+					logmsg('pausing upload...');
+					setProgressState('Paused');
+				}}>Pause</button>}
+
+			</div>
+			<div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+				<div>
+					Processed email messages: {processedMessages} {totalMessages ? `of ${totalMessages}` : ''}
+				</div>
+				<div>
+					Uploaded domain/selector pairs: {uploadedPairs.size}
+				</div>
+				<div>
+					Added domain/selector pairs: {addedPairs}
+				</div>
+			</div>
+			<LogConsole log={log} setLog={setLog} />
+		</>
+	}
+
 
 	function logmsg(message: string) {
 		console.log(message);
@@ -121,10 +165,11 @@ export default function Page() {
 	return (
 		<div>
 			<h1>Upload from Gmail</h1>
-			<div>
-				{session?.user?.email && <div>Signed in as {session?.user?.email}</div>}
-				{session && <button onClick={() => signOut()}>Sign out</button>}
-			</div>
+
+			{signedIn && <div>
+				{session.user?.email && <div>Signed in as {session?.user?.email}</div>}
+				<button onClick={() => signOut()}>Sign out</button>
+			</div>}
 			<p>
 				On this page, you can contribute to the project by uploading domains and selectors from your Gmail account.
 			</p>
@@ -135,31 +180,7 @@ export default function Page() {
 				<div>
 					Progress: {progressState}
 				</div>
-				<div>
-					{showStartButton && <button onClick={() => {
-						uploadFromGmail();
-					}}>Start</button>}
-					{showResumeButton && <button onClick={() => {
-						uploadFromGmail();
-					}}>Resume</button>}
-					{showPauseButton && <button onClick={() => {
-						logmsg('pausing upload...');
-						setProgressState('Paused');
-					}}>Pause</button>}
-
-				</div>
-				<div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
-					<div>
-						Processed email messages: {processedMessages} {totalMessages ? `of ${totalMessages}` : ''}
-					</div>
-					<div>
-						Uploaded domain/selector pairs: {uploadedPairs.size}
-					</div>
-					<div>
-						Added domain/selector pairs: {addedPairs}
-					</div>
-				</div>
-				<LogConsole log={log} setLog={setLog} />
+				<ProgressArea />
 			</div >
 		</div >
 	)
