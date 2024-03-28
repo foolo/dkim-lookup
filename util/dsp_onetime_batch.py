@@ -59,7 +59,7 @@ def worker():
 
 
 def process_domain(domain: str, selectors: list[str]) -> int:
-	for _i in range(10):
+	for _i in range(20):
 		t = threading.Thread(target=worker, daemon=True)
 		t.start()
 	for selector in selectors:
